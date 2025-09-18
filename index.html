@@ -504,7 +504,7 @@
         .node-input {
             width: 100%;
             padding: 0.5rem;
-            background: rgba(31, 41, 55, 0.5);
+            background: rgba(31, 41, 55, 0.8);
             border: 1px solid #374151;
             border-radius: 0.5rem;
             color: #ffffff;
@@ -516,10 +516,18 @@
             outline: none;
             border-color: #f59e0b;
             box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+            background: rgba(31, 41, 55, 0.9);
         }
 
         .node-input::placeholder {
             color: #9ca3af;
+        }
+
+        .node-input:disabled {
+            background: rgba(31, 41, 55, 0.3);
+            border-color: #4b5563;
+            color: #6b7280;
+            cursor: not-allowed;
         }
 
         /* Button styles */
@@ -536,7 +544,7 @@
             box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
         }
 
-        .node-button:hover {
+        .node-button:hover:not(:disabled) {
             background: linear-gradient(145deg, #d97706, #b45309);
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(245, 158, 11, 0.4);
@@ -546,13 +554,20 @@
             transform: translateY(0);
         }
 
+        .node-button:disabled {
+            background: linear-gradient(145deg, #6b7280, #4b5563);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         /* Convert button specific styles */
         .convert-button {
             background: linear-gradient(145deg, #3b82f6, #2563eb) !important;
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
         }
 
-        .convert-button:hover {
+        .convert-button:hover:not(:disabled) {
             background: linear-gradient(145deg, #2563eb, #1d4ed8) !important;
             box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4) !important;
             transform: translateY(-2px);
@@ -765,13 +780,14 @@
                             
                             <div class="space-y-3">
                                 <input 
+                                    id="activation-input"
                                     type="number" 
                                     placeholder="Minimal 10 BossX" 
                                     class="node-input"
                                     min="10"
                                     step="0.000000001"
                                 />
-                                <button class="node-button" onclick="activateNode()">
+                                <button id="activation-button" class="node-button" onclick="activateNode()">
                                     Aktivasi Node
                                 </button>
                             </div>
@@ -836,7 +852,7 @@
                             
                             <div class="space-y-3">
                                 <p class="text-xs text-blue-400">
-                                    Auto claim in: <span id="auto-claim-timer" class="auto-claim-timer">60</span>s
+                                    Auto claim in: <span id="auto-claim-timer" class="auto-claim-timer">--</span>s
                                 </p>
                                 <button class="node-button convert-button" onclick="convertToUSDT()">
                                     Convert To USDT
@@ -879,7 +895,7 @@
                             <div>
                                 <p><strong>• Node Status:</strong> <span id="node-status">Belum Aktif</span></p>
                                 <p><strong>• Auto Stop:</strong> Setiap hari jam 06:00</p>
-                                <p><strong>• Auto Claim:</strong> Setiap 60 detik</p>
+                                <p><strong>• Auto Claim:</strong> Hanya saat validasi running</p>
                             </div>
                             <div>
                                 <p><strong>• Minimal Aktivasi:</strong> 10 BossX</p>
@@ -901,13 +917,13 @@
         let isNodeActive = false;
         let isValidationRunning = false;
         let countdownInterval;
-        let autoClaimInterval;
+        let autoClaimInterval = null;
         let autoClaimSeconds = 60;
         let validationInterval;
         let currentValidationReward = 0;
         let totalRewardBalance = 0;
         let usdtBalance = 0;
-        let bossxBalance = 100; // Starting balance for demo (user should have some BossX)
+        let bossxBalance = 100; // Starting balance for demo
         let validationCounter = 1;
 
         // Real-time clock
@@ -952,7 +968,7 @@
 
         // Node activation function
         function activateNode() {
-            const inputValue = document.querySelector('.node-input').value;
+            const inputValue = document.getElementById('activation-input').value;
             const inputAmount = parseFloat(inputValue) || 0;
             
             if (inputAmount < 10) {
@@ -970,9 +986,14 @@
             isNodeActive = true;
             
             // Update UI
-            document.querySelector('.node-button').innerHTML = 'Node Aktif ✓';
-            document.querySelector('.node-button').style.background = 'linear-gradient(145deg, #10b981, #059669)';
-            document.querySelector('.node-input').disabled = true;
+            const activationButton = document.getElementById('activation-button');
+            const activationInput = document.getElementById('activation-input');
+            
+            activationButton.innerHTML = 'Node Aktif ✓';
+            activationButton.style.background = 'linear-gradient(145deg, #10b981, #059669)';
+            activationButton.disabled = true;
+            activationInput.disabled = true;
+            
             document.getElementById('node-status').textContent = 'Aktif';
             document.getElementById('node-status').style.color = '#10b981';
             
@@ -1047,9 +1068,20 @@
             document.getElementById('usdt-balance').textContent = usdtBalance.toFixed(2) + ' USDT';
         }
 
-        // Auto claim countdown (modified)
+        // Auto claim countdown (modified - only runs when power is ON)
         function startAutoClaimCountdown() {
+            if (autoClaimInterval) {
+                clearInterval(autoClaimInterval);
+            }
+            
+            autoClaimSeconds = 60; // Reset to 60
+            
             function updateAutoClaimTimer() {
+                if (!isValidationRunning) {
+                    document.getElementById('auto-claim-timer').textContent = '--';
+                    return;
+                }
+                
                 if (autoClaimSeconds <= 0) {
                     // Perform auto claim
                     performAutoClaim();
@@ -1060,8 +1092,15 @@
                 autoClaimSeconds--;
             }
             
-            updateAutoClaimTimer();
             autoClaimInterval = setInterval(updateAutoClaimTimer, 1000);
+        }
+
+        function stopAutoClaimCountdown() {
+            if (autoClaimInterval) {
+                clearInterval(autoClaimInterval);
+                autoClaimInterval = null;
+            }
+            document.getElementById('auto-claim-timer').textContent = '--';
         }
 
         // Power button toggle function (modified)
@@ -1086,6 +1125,7 @@
                 countdownDisplay.style.display = 'block';
                 startCountdown();
                 startValidationRunning();
+                startAutoClaimCountdown(); // Start auto claim countdown when power ON
                 showSuccessMessage('Validasi dimulai! Earning BossX per detik...');
             } else {
                 // Turn OFF
@@ -1097,6 +1137,7 @@
                     clearInterval(countdownInterval);
                 }
                 stopValidationRunning();
+                stopAutoClaimCountdown(); // Stop auto claim countdown when power OFF
                 showSuccessMessage('Validasi dihentikan.');
             }
             
@@ -1214,9 +1255,6 @@
             setInterval(updateClock, 1000);
             updateClock();
             
-            // Start auto claim countdown
-            startAutoClaimCountdown();
-            
             // Check for 6 AM stop every second
             setInterval(checkSixAMStop, 1000);
             
@@ -1232,7 +1270,7 @@
             }, 1000);
         });
 
-        console.log('BossX Crypto Exchange Platform - Validator Masternode System loaded successfully!');
+        console.log('BossX Crypto Exchange Platform - Fixed Version loaded successfully!');
     </script>
 </body>
 </html>
