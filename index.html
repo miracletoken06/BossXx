@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BossX - Crypto Exchange Platform</title>
+    <title>BossX - Crypto Exchange Platform | Validator Masternode System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
@@ -575,6 +575,31 @@
             color: #3b82f6;
             text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
         }
+
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(145deg, #10b981, #059669);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -709,7 +734,7 @@
                     <div class="bg-gray-900 border border-amber-500/20 rounded-xl p-3 overflow-hidden">
                         <div class="relative">
                             <div id="running-text" class="whitespace-nowrap text-amber-400 font-medium text-sm">
-                                🔥 BTC +5.2% $35,000 • ETH +3.8% $1,875 • BNB -1.2% $206 • ADA +7.1% $0.52 • SOL +12.5% $98 • DOT +2.3% $6.75 • MATIC +8.9% $0.89 • LINK +4.2% $14.30 • UNI +6.7% $7.25 • AVAX +9.1% $28.40 • Market Cap: $1.2T • 24h Vol: $45.6B 🚀
+                                🔥 BTC +5.2% $35,000 • ETH +3.8% $1,875 • BNB -1.2% $206 • ADA +7.1% $0.52 • SOL +12.5% $98 • DOT +2.3% $6.75 • MATIC +8.9% $0.89 • LINK +4.2% $14.30 • UNI +6.7% $7.25 • AVAX +9.1% $28.40 • Market Cap: $1.2T • 24h Vol: $45.6B 🚀 | BossX Validator Masternode System Active
                             </div>
                         </div>
                     </div>
@@ -734,15 +759,19 @@
                                 <p class="text-sm text-gray-400">Aktivasi Node</p>
                                 <i data-lucide="cpu" class="w-4 h-4 text-amber-400"></i>
                             </div>
-                            <div class="text-lg font-bold text-white mb-3">0,000000000 BossX</div>
+                            <div class="text-lg font-bold text-white mb-3">
+                                <span id="bossx-balance">100,000000000 BossX</span>
+                            </div>
                             
                             <div class="space-y-3">
                                 <input 
-                                    type="text" 
+                                    type="number" 
                                     placeholder="Minimal 10 BossX" 
                                     class="node-input"
+                                    min="10"
+                                    step="0.000000001"
                                 />
-                                <button class="node-button">
+                                <button class="node-button" onclick="activateNode()">
                                     Aktivasi Node
                                 </button>
                             </div>
@@ -766,7 +795,9 @@
                                 <p class="text-sm text-gray-400">Validasi Running</p>
                                 <i data-lucide="zap" class="w-4 h-4 text-green-400"></i>
                             </div>
-                            <div class="text-lg font-bold text-white mb-3">0,000000000 BossX</div>
+                            <div class="text-lg font-bold text-white mb-3">
+                                <span id="validation-balance">0,000000000 BossX</span>
+                            </div>
                             
                             <div class="text-center space-y-3">
                                 <p id="validation-status" class="text-sm text-gray-400">Belum berjalan</p>
@@ -799,13 +830,15 @@
                                 <p class="text-sm text-gray-400">Reward Validasi</p>
                                 <i data-lucide="gift" class="w-4 h-4 text-blue-400"></i>
                             </div>
-                            <div class="text-lg font-bold text-white mb-3">0,000000000 BossX</div>
+                            <div class="text-lg font-bold text-white mb-3">
+                                <span id="reward-balance">0,000000000 BossX</span>
+                            </div>
                             
                             <div class="space-y-3">
                                 <p class="text-xs text-blue-400">
                                     Auto claim in: <span id="auto-claim-timer" class="auto-claim-timer">60</span>s
                                 </p>
-                                <button class="node-button convert-button">
+                                <button class="node-button convert-button" onclick="convertToUSDT()">
                                     Convert To USDT
                                 </button>
                             </div>
@@ -829,8 +862,30 @@
                                 <p class="text-sm text-gray-400">Balance USDT</p>
                                 <i data-lucide="dollar-sign" class="w-4 h-4 text-green-400"></i>
                             </div>
-                            <div class="text-2xl font-bold text-white">0,00 USDT</div>
+                            <div class="text-2xl font-bold text-white">
+                                <span id="usdt-balance">0,00 USDT</span>
+                            </div>
                             <p class="text-xs text-green-400 mt-1">Available balance</p>
+                        </div>
+                    </div>
+
+                    <!-- System Status Information -->
+                    <div class="bg-gray-900 border border-blue-500/20 rounded-xl p-4 mt-6">
+                        <div class="flex items-center mb-3">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-400 mr-2"></i>
+                            <h3 class="text-lg font-semibold text-blue-400">Informasi Sistem BossX Validator</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+                            <div>
+                                <p><strong>• Node Status:</strong> <span id="node-status">Belum Aktif</span></p>
+                                <p><strong>• Auto Stop:</strong> Setiap hari jam 06:00</p>
+                                <p><strong>• Auto Claim:</strong> Setiap 60 detik</p>
+                            </div>
+                            <div>
+                                <p><strong>• Minimal Aktivasi:</strong> 10 BossX</p>
+                                <p><strong>• Minimal Convert:</strong> 1 BossX</p>
+                                <p><strong>• Rate Convert:</strong> 1 BossX = 1 USDT</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -843,10 +898,17 @@
         lucide.createIcons();
 
         // Global variables
+        let isNodeActive = false;
         let isValidationRunning = false;
         let countdownInterval;
         let autoClaimInterval;
         let autoClaimSeconds = 60;
+        let validationInterval;
+        let currentValidationReward = 0;
+        let totalRewardBalance = 0;
+        let usdtBalance = 0;
+        let bossxBalance = 100; // Starting balance for demo (user should have some BossX)
+        let validationCounter = 1;
 
         // Real-time clock
         function updateClock() {
@@ -868,10 +930,129 @@
             document.getElementById('date').textContent = now.toLocaleDateString('id-ID', dateOptions);
         }
 
-        // Auto claim countdown
+        // Show success message
+        function showSuccessMessage(message) {
+            // Remove existing message if any
+            const existingMessage = document.querySelector('.success-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            // Create new message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'success-message';
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // Node activation function
+        function activateNode() {
+            const inputValue = document.querySelector('.node-input').value;
+            const inputAmount = parseFloat(inputValue) || 0;
+            
+            if (inputAmount < 10) {
+                alert('Minimal 10 BossX diperlukan untuk aktivasi node!');
+                return;
+            }
+            
+            if (bossxBalance < inputAmount) {
+                alert('Saldo BossX tidak mencukupi!');
+                return;
+            }
+            
+            // Deduct BossX balance
+            bossxBalance -= inputAmount;
+            isNodeActive = true;
+            
+            // Update UI
+            document.querySelector('.node-button').innerHTML = 'Node Aktif ✓';
+            document.querySelector('.node-button').style.background = 'linear-gradient(145deg, #10b981, #059669)';
+            document.querySelector('.node-input').disabled = true;
+            document.getElementById('node-status').textContent = 'Aktif';
+            document.getElementById('node-status').style.color = '#10b981';
+            
+            // Update balance display
+            updateBalanceDisplays();
+            
+            showSuccessMessage(`Node berhasil diaktivasi dengan ${inputAmount} BossX!`);
+        }
+
+        // Validation running function
+        function startValidationRunning() {
+            if (!isNodeActive) {
+                alert('Aktivasi node terlebih dahulu!');
+                return;
+            }
+            
+            validationInterval = setInterval(() => {
+                currentValidationReward = validationCounter * 0.000000001;
+                document.getElementById('validation-balance').textContent = currentValidationReward.toFixed(9) + ' BossX';
+                validationCounter++;
+            }, 1000);
+        }
+
+        function stopValidationRunning() {
+            if (validationInterval) {
+                clearInterval(validationInterval);
+                validationInterval = null;
+                currentValidationReward = 0;
+                validationCounter = 1;
+                document.getElementById('validation-balance').textContent = '0,000000000 BossX';
+            }
+        }
+
+        // Auto claim function (every 60 seconds)
+        function performAutoClaim() {
+            if (currentValidationReward > 0 && isValidationRunning) {
+                totalRewardBalance += currentValidationReward;
+                
+                // Show claim message
+                showSuccessMessage(`Auto Claim: +${currentValidationReward.toFixed(9)} BossX`);
+                
+                // Reset validation balance
+                currentValidationReward = 0;
+                validationCounter = 1;
+                
+                // Update displays
+                updateBalanceDisplays();
+            }
+        }
+
+        // Convert to USDT function
+        function convertToUSDT() {
+            if (totalRewardBalance < 1) {
+                alert('Minimal 1 BossX diperlukan untuk konversi ke USDT!');
+                return;
+            }
+            
+            // Simple conversion rate: 1 BossX = 1 USDT
+            const convertAmount = Math.floor(totalRewardBalance);
+            usdtBalance += convertAmount;
+            totalRewardBalance -= convertAmount;
+            
+            updateBalanceDisplays();
+            showSuccessMessage(`Berhasil convert ${convertAmount} BossX ke ${convertAmount} USDT!`);
+        }
+
+        // Update all balance displays
+        function updateBalanceDisplays() {
+            document.getElementById('bossx-balance').textContent = bossxBalance.toFixed(9) + ' BossX';
+            document.getElementById('validation-balance').textContent = currentValidationReward.toFixed(9) + ' BossX';
+            document.getElementById('reward-balance').textContent = totalRewardBalance.toFixed(9) + ' BossX';
+            document.getElementById('usdt-balance').textContent = usdtBalance.toFixed(2) + ' USDT';
+        }
+
+        // Auto claim countdown (modified)
         function startAutoClaimCountdown() {
             function updateAutoClaimTimer() {
                 if (autoClaimSeconds <= 0) {
+                    // Perform auto claim
+                    performAutoClaim();
                     autoClaimSeconds = 60; // Reset to 60 seconds
                 }
                 
@@ -883,8 +1064,13 @@
             autoClaimInterval = setInterval(updateAutoClaimTimer, 1000);
         }
 
-        // Power button toggle function
+        // Power button toggle function (modified)
         function togglePower() {
+            if (!isNodeActive) {
+                alert('Aktivasi node terlebih dahulu!');
+                return;
+            }
+            
             const powerBtn = document.getElementById('power-btn');
             const powerIcon = document.getElementById('power-icon');
             const statusText = document.getElementById('validation-status');
@@ -899,6 +1085,8 @@
                 statusText.textContent = 'Stop validasi setiap jam 06.00';
                 countdownDisplay.style.display = 'block';
                 startCountdown();
+                startValidationRunning();
+                showSuccessMessage('Validasi dimulai! Earning BossX per detik...');
             } else {
                 // Turn OFF
                 powerBtn.classList.remove('on');
@@ -908,6 +1096,8 @@
                 if (countdownInterval) {
                     clearInterval(countdownInterval);
                 }
+                stopValidationRunning();
+                showSuccessMessage('Validasi dihentikan.');
             }
             
             // Re-initialize Lucide icons
@@ -939,6 +1129,18 @@
             
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // Check if it's 6 AM and stop validation
+        function checkSixAMStop() {
+            const now = new Date();
+            if (now.getHours() === 6 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+                if (isValidationRunning) {
+                    // Auto stop at 6 AM
+                    togglePower();
+                    showSuccessMessage('Validasi dihentikan otomatis pada jam 06:00. Silakan aktifkan kembali untuk melanjutkan.');
+                }
+            }
         }
 
         // Sidebar toggle functionality
@@ -1015,11 +1217,22 @@
             // Start auto claim countdown
             startAutoClaimCountdown();
             
+            // Check for 6 AM stop every second
+            setInterval(checkSixAMStop, 1000);
+            
+            // Initialize balance displays
+            updateBalanceDisplays();
+            
             // Initialize Lucide icons
             lucide.createIcons();
+            
+            // Welcome message
+            setTimeout(() => {
+                showSuccessMessage('Selamat datang di BossX Validator Masternode System!');
+            }, 1000);
         });
 
-        console.log('BossX Crypto Exchange Platform - Final Version loaded successfully!');
+        console.log('BossX Crypto Exchange Platform - Validator Masternode System loaded successfully!');
     </script>
 </body>
 </html>
